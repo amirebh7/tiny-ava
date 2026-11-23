@@ -8,10 +8,18 @@ const CACHE_NAME = "tiny-ava-v1";
 const SAMPLE_RATE = 24000;
 const PEAK = 0.99;
 
-// Exact 46-symbol Persian IPA table (matches src/tiny_voca/text.py & tiny-ava-parisa.json)
+// Exact 46-symbol Persian IPA table (matches models/parisa/tiny-ava-parisa.json)
+const SYMBOLS = [
+  "<pad>", "<bos>", "<eos>", "<sp>", "<unk>",
+  "،", ".", "؟", "!", "؛", ":", "«", "»", "(", ")", "—", "…",
+  "p", "b", "t", "d", "k", "ɡ", "q", "ʔ", "f", "v", "s", "z", "ʃ", "ʒ", "x", "h", "tʃ", "dʒ", "m", "n", "l", "r", "j",
+  "a", "e", "o", "i", "u", "ɑ",
+];
 const PAD = "<pad>", BOS = "<bos>", EOS = "<eos>", SP = "<sp>", UNK = "<unk>";
 const PUNCTUATION = new Set(["،", ".", "؟", "!", "؛", ":", "«", "»", "(", ")", "—", "…"]);
 const VOWELS = new Set(["a", "e", "o", "i", "u", "ɑ"]);
+const SYMBOL_TO_ID = Object.fromEntries(SYMBOLS.map((s, i) => [s, i]));
+const PHONE_SET = new Set(SYMBOLS.slice(17));
 const REPR1_TO_IPA = {
   a: "a", A: "ɑ", e: "e", o: "o", i: "i", u: "u",
   p: "p", b: "b", t: "t", d: "d", k: "k", g: "ɡ", q: "q", "?": "ʔ",
@@ -32,9 +40,9 @@ const utf8Dec = new TextDecoder("utf-8", { fatal: false });
 let g2pEncSess = null;
 let g2pDecSess = null;
 let ttsSess = null;
-let symbolToId = null;
-let phoneSet = null;
-let maxTokens = 512;
+const symbolToId = SYMBOL_TO_ID;
+const phoneSet = PHONE_SET;
+const maxTokens = 512;
 let cancelledId = -1;
 
 function sendStatus(text, progress = null) {
@@ -54,8 +62,21 @@ async function fetchCached(url, label, baseProg, spanProg) {
     store = null;
   }
 
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Failed to fetch ${url} (${resp.status})`);
+  const resp = await fetch(url, { credentials: "include" });
+  if (!resp.ok) {
+    if (resp.status === 401 || resp.status === 403) {
+      throw new Error(
+        `Private Space auth blocked in iframe (HTTP ${resp.status}). Open the direct Space URL in its own tab, or make the Space public.`
+      );
+    }
+    throw new Error(`Failed to fetch ${url} (HTTP ${resp.status})`);
+  }
+  const ct = (resp.headers.get("content-type") || "").toLowerCase();
+  if (ct.includes("text/plain") || ct.includes("text/html")) {
+    throw new Error(
+      `Blocked by private Space auth (got ${ct}). Open the direct .static.hf.space URL in its own tab, or make the Space public.`
+    );
+  }
   const total = Number(resp.headers.get("content-length")) || 0;
   if (!resp.body || !total) {
     const buf = new Uint8Array(await resp.arrayBuffer());
@@ -88,12 +109,6 @@ async function loadAll() {
   }
   ort.env.wasm.wasmPaths = ORT_CDN;
   ort.env.wasm.numThreads = 1;
-
-  const meta = await (await fetch("assets/tiny-ava-parisa.json")).json();
-  symbolToId = {};
-  meta.symbols.forEach((s, i) => { symbolToId[s] = i; });
-  phoneSet = new Set(meta.symbols.slice(17)); // after 5 specials + 12 punctuation
-  if (meta.max_tokens) maxTokens = meta.max_tokens;
 
   const encBytes = await fetchCached("assets/g2p/g2p_encoder.onnx", "Downloading Persian G2P encoder (3.5 MB)", 0.0, 0.14);
   const decBytes = await fetchCached("assets/g2p/g2p_decoder.onnx", "Downloading Persian G2P decoder (5.3 MB)", 0.14, 0.18);
