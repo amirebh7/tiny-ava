@@ -2,6 +2,9 @@
 
 A **4.5M-parameter (~18 MB PyTorch / ~20 MB ONNX)** Persian (Farsi) text-to-speech model that runs **38×–77× faster than real time on CPU**, trained from scratch on top of the [`tiny-voca`](https://github.com/n4ze3m/tiny-voca) architecture.
 
+- **Live in-browser demo (100% client-side, ~29 MB):** https://huggingface.co/spaces/mehdi-hf/tiny-ava-demo
+- **Hugging Face model:** https://huggingface.co/mehdi-hf/tiny-ava
+
 ## Models Included
 
 | Voice | File | Format | Size | Parameters | Sample Rate | CPU Speed (1t / 4t) |
