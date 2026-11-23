@@ -44,6 +44,9 @@
   input[type=range] { width: 100%; accent-color: var(--accent); }
   .val { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
   .actions { display: flex; align-items: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+  .modelbox { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; margin-top: 18px; padding: 12px 16px; background: var(--soft); border-radius: 12px; font-size: 13.5px; }
+  .modelbox #modeltext { flex: 1 1 260px; min-width: 0; color: var(--muted); }
+  .modelbox a { color: var(--muted); font-size: 13px; }
   button.main { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 11px 24px; font: 600 15px inherit; cursor: pointer; }
   button.main:disabled { opacity: .5; cursor: progress; }
   button.sec { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; font: inherit; cursor: pointer; }
@@ -97,10 +100,16 @@
       </div>
     </div>
 
+    <div class="modelbox" id="modelbox">
+      <span id="modeltext">Checking browser cache...</span>
+      <button class="sec" id="dlmodel" type="button" hidden>Download models (~29 MB)</button>
+      <a href="#" id="rmmodel" hidden>Remove from this browser</a>
+    </div>
+
     <div class="actions">
       <button class="main" id="go" type="button">Speak</button>
       <button class="sec" id="stop" type="button" hidden>Stop</button>
-      <span id="status" role="status">Initializing...</span>
+      <span id="status" role="status"></span>
     </div>
     <progress id="load" max="1" value="0" hidden></progress>
 
@@ -120,7 +129,6 @@
 
   <footer>
     <span>Powered by <strong>tiny-ava</strong> (OncillaAI) · Model weights CC BY 4.0 · Code Apache-2.0</span>
-    <span><a href="#" id="clearCache">Clear cached models</a></span>
   </footer>
 </main>
 <script type="module" src="app.js"></script>

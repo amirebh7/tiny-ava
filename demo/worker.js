@@ -311,9 +311,31 @@ function limitPeak(wave) {
   return out;
 }
 
+const CACHE_URLS = [
+  "assets/g2p/g2p_encoder.onnx",
+  "assets/g2p/g2p_decoder.onnx",
+  "assets/tiny-ava-parisa.onnx",
+];
+
+async function isCached() {
+  try {
+    const store = await caches.open(CACHE_NAME);
+    const hits = await Promise.all(CACHE_URLS.map((u) => store.match(u)));
+    return hits.every(Boolean);
+  } catch (_) {
+    return false;
+  }
+}
+
 self.onmessage = async (ev) => {
   const msg = ev.data;
   try {
+    if (msg.type === "check_cache") {
+      const cached = await isCached();
+      postMessage({ type: "cache_status", cached });
+      if (cached) await loadAll();
+      return;
+    }
     if (msg.type === "load") {
       await loadAll();
       return;
@@ -324,6 +346,9 @@ self.onmessage = async (ev) => {
     }
     if (msg.type === "clear_cache") {
       await caches.delete(CACHE_NAME);
+      g2pEncSess = null;
+      g2pDecSess = null;
+      ttsSess = null;
       postMessage({ type: "cache_cleared" });
       return;
     }

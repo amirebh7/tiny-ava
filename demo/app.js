@@ -15,7 +15,8 @@ const textEl = $("text");
 const speedEl = $("speed"), speedVal = $("speedVal");
 const pitchEl = $("pitch"), pitchVal = $("pitchVal");
 const rangeEl = $("range"), rangeVal = $("rangeVal");
-const goBtn = $("go"), stopBtn = $("stop"), clearCacheLink = $("clearCache");
+const goBtn = $("go"), stopBtn = $("stop");
+const modelText = $("modeltext"), dlModelBtn = $("dlmodel"), rmModelLink = $("rmmodel");
 const statusEl = $("status"), progEl = $("load");
 const outEl = $("out"), player = $("player"), dlEl = $("dl"), statsEl = $("stats");
 const waveCanvas = $("wave"), phonesEl = $("phones"), phonesBox = $("phonesBox");
@@ -130,12 +131,38 @@ function setStatus(msg, isErr = false) {
   statusEl.className = isErr ? "err" : "";
 }
 
+function updateModelBox(state) {
+  if (state === "not_cached") {
+    modelText.textContent = "Models (~29 MB) are not downloaded yet — fetched once and cached locally in this browser.";
+    dlModelBtn.hidden = false;
+    dlModelBtn.disabled = false;
+    rmModelLink.hidden = true;
+  } else if (state === "downloading") {
+    modelText.textContent = "Downloading and initializing models in this browser (~29 MB)...";
+    dlModelBtn.hidden = false;
+    dlModelBtn.disabled = true;
+    rmModelLink.hidden = true;
+  } else if (state === "ready") {
+    modelText.textContent = "Models ready in this browser (~29 MB cached — runs 100% offline).";
+    dlModelBtn.hidden = true;
+    rmModelLink.hidden = false;
+  }
+}
+
 function initWorker() {
   if (worker) return;
   worker = new Worker("worker.js");
   worker.onmessage = (ev) => {
     const m = ev.data;
-    if (m.type === "status") {
+    if (m.type === "cache_status") {
+      if (m.cached) {
+        updateModelBox("downloading");
+        setStatus("Loading cached models...");
+      } else {
+        updateModelBox("not_cached");
+        setStatus("");
+      }
+    } else if (m.type === "status") {
       setStatus(m.text);
       if (m.progress !== null && m.progress !== undefined) {
         progEl.hidden = false;
@@ -144,11 +171,13 @@ function initWorker() {
     } else if (m.type === "ready") {
       ready = true;
       progEl.hidden = true;
-      setStatus("Models ready in browser (~29 MB cached).");
+      updateModelBox("ready");
+      setStatus("Ready.");
       goBtn.disabled = false;
     } else if (m.type === "cache_cleared") {
       ready = false;
-      setStatus("Browser model cache cleared. Reload or click Speak to re-download.");
+      updateModelBox("not_cached");
+      setStatus("Models removed from browser cache.");
     } else if (m.type === "done" && m.id === activeId) {
       setBusy(false);
       progEl.hidden = true;
@@ -189,13 +218,22 @@ function initWorker() {
   };
 }
 
+dlModelBtn.onclick = () => {
+  initWorker();
+  updateModelBox("downloading");
+  goBtn.disabled = true;
+  setStatus("Downloading models (~29 MB)...");
+  worker.postMessage({ type: "load" });
+};
+
 goBtn.onclick = () => {
   const txt = textEl.value.trim();
   if (!txt) { setStatus("Please enter Persian text.", true); return; }
   initWorker();
   activeId++;
   setBusy(true);
-  setStatus(ready ? "Synthesizing..." : "Loading ONNX models into browser...");
+  if (!ready) updateModelBox("downloading");
+  setStatus(ready ? "Synthesizing..." : "Downloading models (~29 MB)...");
   // 0.058 log-F0 per semitone
   const pitchShift = Number(pitchEl.value) * 0.058;
   worker.postMessage({
@@ -216,13 +254,12 @@ stopBtn.onclick = () => {
   setStatus("Stopped.");
 };
 
-clearCacheLink.onclick = (e) => {
+rmModelLink.onclick = (e) => {
   e.preventDefault();
   initWorker();
   worker.postMessage({ type: "clear_cache" });
 };
 
-// Preload models on page load so first click is instant
+// Check if already cached on load (loads immediately if cached; otherwise waits for user click)
 initWorker();
-goBtn.disabled = true;
-worker.postMessage({ type: "load" });
+worker.postMessage({ type: "check_cache" });
