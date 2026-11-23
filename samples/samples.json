@@ -13,9 +13,9 @@
   },
   {
     "name": "03_ezafe_kasra",
-    "text": "بارانِ ریزی روی آسفالتِ خیس خیابان می‌بارد.",
-    "duration_sec": 3.54,
-    "phones": "<bos> b ɑ r ɑ n e <sp> r i z i <sp> r u j e <sp> ɑ s f ɑ l t e <sp> x i s <sp> x i j ɑ b ɑ n <sp> m i b ɑ r a d . <eos>"
+    "text": "بارانِ ریزی روی آسفالتِ خیسِ خیابان می‌بارد.",
+    "duration_sec": 3.62,
+    "phones": "<bos> b ɑ r ɑ n e <sp> r i z i <sp> r u j e <sp> ɑ s f ɑ l t e <sp> x i s e <sp> x i j ɑ b ɑ n <sp> m i b ɑ r a d . <eos>"
   },
   {
     "name": "04_homo_tost",
