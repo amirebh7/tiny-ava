@@ -34,5 +34,6 @@ Both support plain Persian text as well as optional user-typed diacritics (`ـَ
 
 ## Credits & License
 
-- **License:** Apache-2.0 (see [`LICENSE`](LICENSE)).
+- **Model Weights License:** **CC BY 4.0** — free for personal, research, and commercial use with attribution (*"Powered by tiny-ava (Mehdi Allahyari / OncillaAI)"* + link to `mehdi-hf/tiny-ava`).
+- **Code License:** Apache-2.0 (see [`LICENSE`](LICENSE)).
 - **Architecture:** Built on [`n4ze3m/tiny-voca`](https://github.com/n4ze3m/tiny-voca) (Apache-2.0) by Muhammed Nazeem.
