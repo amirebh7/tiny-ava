@@ -62,7 +62,9 @@ async function fetchCached(url, label, baseProg, spanProg) {
     store = null;
   }
 
-  const resp = await fetch(url, { credentials: "include" });
+  // Default credentials ("same-origin") is required so cross-origin redirects to
+  // HF Xet/CDN (which respond with Access-Control-Allow-Origin: *) pass CORS cleanly.
+  const resp = await fetch(url);
   if (!resp.ok) {
     if (resp.status === 401 || resp.status === 403) {
       throw new Error(
